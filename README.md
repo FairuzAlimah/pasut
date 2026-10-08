@@ -4,11 +4,7 @@
 ### di Wilayah Selatan Yogyakarta 2027–2029
 
 Prediksi pasang surut berbasis **pyTMD** dengan model **GOT** dan **EOT20** pada 13 titik stasiun, dilengkapi validasi terhadap data pengamatan **BIG 2025**.
-
 <br>
-
-### [Buka Website Dashboard](https://fairuzalimah.github.io/pasut/)
-
 </div>
 
 ---

@@ -1,128 +1,184 @@
-# Dashboard Prediksi Pasang Surut Pantai Selatan DIY
+# Dashboard Pasang Surut
 
-Dashboard ini merupakan aplikasi berbasis web untuk menampilkan hasil prediksi pasang surut di 13 stasiun pantai selatan Daerah Istimewa Yogyakarta (DIY).
+Dashboard pasang surut (pasut) versi *static* yang diselaraskan dengan dashboard Python Dash. Fitur:
 
-Pengolahan data pasang surut dilakukan menggunakan **pyTMD (Python-based Tidal Prediction Software)** dengan model pasang surut **GOT4.10** dan **EOT20**. Hasil pengolahan kemudian digunakan sebagai sumber data pada dashboard berbasis HTML, CSS, dan JavaScript yang dapat dijalankan secara statis melalui GitHub Pages.
-
----
-
-## 1. Deskripsi Proyek
-
-Dashboard digunakan untuk memvisualisasikan prediksi pasang surut pada wilayah pantai selatan DIY, mulai dari wilayah Kulon Progo hingga Gunungkidul.
-
-Terdapat 13 stasiun pengamatan/prediksi yang digunakan dalam pengolahan data, yaitu:
-
-1. Congot
-2. Glagah
-3. Bugel
-4. Trisik
-5. Ngenthak
-6. Kuwaru
-7. Goa Cemara
-8. Samas
-9. Depok
-10. Ngrenehan
-11. Baron
-12. Sadeng
-13. [Stasiun ke-13 sesuai data pengolahan]
-
-Dashboard menampilkan:
-
-- Prediksi pasang surut tahun 2027–2029
-- Grafik pasang surut
+- Kartu statistik
+- Peta Leaflet dengan pin stasiun
 - Statistik mingguan
-- Tabel data pasang surut
-- Validasi silang GOT4.10 dan EOT20
-- Validasi terhadap data BIG tahun 2025
-- Informasi stasiun
-- Peta lokasi stasiun
-- Panduan pemanfaatan informasi pasang surut
-- Informasi metode analisis
+- Validasi EOT20
+- Validasi BIG 2025
+- Panduan Pemanfaatan
+- Informasi Analisis
+
+Prediksi pasut dihitung dengan **[pyTMD](https://github.com/pyTMD/pyTMD)** (Python-based tidal prediction software), lalu hasilnya diekspor ke CSV dan dibaca langsung oleh halaman web (tanpa server).
 
 ---
 
-# 2. Tujuan
+## Struktur Folder
 
-Tujuan utama proyek ini adalah:
+```
+.
+├── index.html            # Halaman utama dashboard
+├── style.css             # Tampilan
+├── app.js                # Logika dashboard (peta, grafik, tabel)
+├── data/                 # CSV hasil pengolahan (dibaca oleh app.js)
+├── assets/
+│   ├── logo_brin.png
+│   └── logo_dkp_diy.png
+├── pengolahan.py         # Prediksi pasut 2027–2029 (GOT + EOT20, 13 stasiun)
+├── 2025.py               # Validasi data BIG tahun 2025
+├── prepare_web_data.py   # Mengubah hasil olahan menjadi CSV untuk web
+└── README.md
+```
 
-1. Menghasilkan prediksi pasang surut untuk wilayah pantai selatan DIY.
-2. Mengolah data prediksi menggunakan model GOT4.10 melalui pyTMD.
-3. Melakukan validasi silang hasil GOT4.10 dengan model EOT20.
-4. Melakukan validasi tambahan menggunakan data BIG tahun 2025.
-5. Menyediakan informasi hasil prediksi dalam bentuk dashboard yang mudah digunakan.
-6. Menyediakan visualisasi spasial lokasi stasiun melalui peta interaktif.
-7. Menyediakan informasi pasang dan surut yang dapat digunakan sebagai bahan pendukung perencanaan aktivitas di wilayah pesisir.
-
----
-
-# 3. Teknologi yang Digunakan
-
-## Pengolahan Data
-
-Pengolahan data dilakukan menggunakan:
-
-- Python
-- pyTMD
-- GOT4.10
-- EOT20
-- NumPy
-- Pandas
-- SciPy
-- Matplotlib
-- Timescale
-
-## Dashboard
-
-Dashboard menggunakan:
-
-- HTML
-- CSS
-- JavaScript
-- Leaflet
-- Plotly
-- CSV
-
-## Deployment
-
-Dashboard dipublikasikan menggunakan:
-
-- GitHub
-- GitHub Pages
+> **Penting:** salin folder `data/` yang sudah berhasil dipakai pada dashboard static sebelumnya ke folder ini. Salin juga dua logo PNG asli ke `assets/` dengan nama file yang sama seperti di atas.
 
 ---
 
-# 4. pyTMD
+## Pengolahan Data (pyTMD)
 
-## Apa itu pyTMD?
+Seluruh perhitungan pasut dilakukan dengan pyTMD. Ada dua skrip pengolahan:
 
-**pyTMD** merupakan perangkat lunak berbasis Python yang digunakan untuk melakukan prediksi pasang surut serta analisis berbagai komponen pasang surut.
+| Skrip | Fungsi |
+|---|---|
+| `pengolahan.py` | Prediksi pasut periode **2027–2029** menggunakan model **GOT** dan **EOT20** untuk **13 titik stasiun** |
+| `2025.py` | Pengolahan **validasi data BIG tahun 2025** (membandingkan prediksi model dengan data pengamatan BIG) |
 
-Pada proyek ini, pyTMD digunakan sebagai library utama untuk melakukan pengolahan prediksi pasang surut menggunakan model:
+`prepare_web_data.py` kemudian merapikan hasilnya menjadi CSV di folder `data/` agar bisa dipakai dashboard.
 
-- GOT4.10
-- EOT20
+### Alur singkat
 
-pyTMD digunakan pada tahap pengolahan data Python. Hasil pengolahan kemudian disimpan dalam bentuk file CSV yang digunakan oleh dashboard.
-
-Dokumentasi dan source code pyTMD tersedia pada GitHub resmi pyTMD.
+```
+Model pasut (GOT / EOT20)  ──►  pyTMD (pengolahan.py, 2025.py)  ──►  prepare_web_data.py  ──►  data/*.csv  ──►  Dashboard
+```
 
 ---
 
-# 5. Persiapan Python
+## Instalasi Python
 
-Untuk menjalankan proses pengolahan data, diperlukan Python.
+### 1. Siapkan Python
 
-Disarankan menggunakan Python versi **3.11** agar lingkungan pengolahan lebih mudah dikontrol.
-
-Python dapat diinstal terlebih dahulu pada komputer.
-
-Setelah instalasi selesai, buka:
-
-- Command Prompt
-- Anaconda Prompt
-- atau terminal
-
-Kemudian cek instalasi Python dengan:
+Gunakan Python 3.9 atau lebih baru. Cek versi:
 
 ```bash
 python --version
+```
+
+### 2. (Disarankan) Buat virtual environment
+
+```bash
+python -m venv venv
+
+# Windows
+venv\Scripts\activate
+
+# macOS / Linux
+source venv/bin/activate
+```
+
+### 3. Install pyTMD
+
+Via pip:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install pyTMD
+```
+
+Untuk sekalian memasang semua dependensi opsional:
+
+```bash
+python -m pip install pyTMD[all]
+```
+
+Atau via conda / mamba (conda-forge):
+
+```bash
+conda install -c conda-forge pytmd
+# atau
+mamba install -c conda-forge pytmd
+```
+
+Versi pengembangan langsung dari GitHub (opsional):
+
+```bash
+python -m pip install git+https://github.com/pyTMD/pyTMD.git
+```
+
+### 4. Install library pendukung skrip
+
+pyTMD akan memasang dependensi intinya sendiri. Untuk skrip di repo ini, pastikan library umum berikut juga terpasang (sesuaikan dengan bagian `import` di `pengolahan.py` dan `2025.py`):
+
+```bash
+python -m pip install numpy pandas scipy matplotlib
+```
+
+### 5. Siapkan data model pasut
+
+pyTMD hanya **perangkat hitung**; file model pasut harus diunduh terpisah dan diletakkan di folder lokal:
+
+- **GOT** (Goddard Ocean Tide)
+- **EOT20** (Empirical Ocean Tide 2020)
+
+Atur lokasi folder model di bagian konfigurasi di `pengolahan.py` / `2025.py` (variabel direktori model), lalu pastikan struktur folder sesuai yang diharapkan pyTMD. Panduan format model ada di dokumentasi: <https://pytmd.readthedocs.io/>
+
+### 6. Cek instalasi
+
+```bash
+python -c "import pyTMD; print(pyTMD.__version__)"
+```
+
+---
+
+## Menjalankan Pengolahan
+
+```bash
+# Prediksi pasut 2027–2029 (GOT + EOT20, 13 stasiun)
+python pengolahan.py
+
+# Validasi data BIG 2025
+python 2025.py
+
+# Ekspor ke CSV untuk dashboard web
+python prepare_web_data.py
+```
+
+---
+
+## Cara Update Data (Singkat)
+
+Intinya: **olah dulu, baru ganti di file web.**
+
+1. **Olah data baru** dengan `pengolahan.py` (prediksi) atau `2025.py` (validasi BIG).
+2. **Jalankan** `prepare_web_data.py` agar hasilnya menjadi CSV.
+3. **Ganti file CSV lama** di folder `data/` dengan CSV baru (nama file harus sama supaya terbaca `app.js`).
+4. **Cek `index.html`** — jika ada perubahan periode/tahun, jumlah stasiun, atau keterangan, sesuaikan teksnya.
+5. **Uji lokal**, lalu *commit* dan *push* ke GitHub.
+
+---
+
+## Uji Lokal
+
+Dashboard memuat CSV lewat `fetch`, jadi tidak bisa dibuka dengan klik dua kali pada `index.html`. Jalankan server lokal:
+
+```bash
+python -m http.server 8000
+```
+
+Lalu buka <http://localhost:8000>.
+
+---
+
+## Deploy ke GitHub Pages
+
+1. *Push* seluruh isi folder ke repository GitHub.
+2. Buka **Settings → Pages**.
+3. Pada **Source**, pilih branch `main` dan folder `/ (root)`, lalu simpan.
+4. Tunggu beberapa menit; dashboard akan tersedia di `https://<username>.github.io/<nama-repo>/`.
+
+---
+
+## Referensi
+
+- pyTMD: <https://github.com/pyTMD/pyTMD>
+- Dokumentasi pyTMD: <https://pytmd.readthedocs.io/>

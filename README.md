@@ -7,9 +7,7 @@ Prediksi pasang surut berbasis **pyTMD** dengan model **GOT** dan **EOT20** pada
 
 <br>
 
-### 🌐 [Buka Website Dashboard](https://fairuzalimah.github.io/pasut/)
-
-[https://fairuzalimah.github.io/pasut/](https://fairuzalimah.github.io/pasut/)
+### [Buka Website Dashboard](https://fairuzalimah.github.io/pasut/)
 
 </div>
 

@@ -5,6 +5,12 @@
 
 Prediksi pasang surut berbasis **pyTMD** dengan model **GOT** dan **EOT20** pada 13 titik stasiun, dilengkapi validasi terhadap data pengamatan **BIG 2025**.
 
+<br>
+
+### 🌐 [Buka Website Dashboard](https://fairuzalimah.github.io/pasut/)
+
+[https://fairuzalimah.github.io/pasut/](https://fairuzalimah.github.io/pasut/)
+
 </div>
 
 ---
@@ -36,6 +42,7 @@ Dashboard ini menyajikan hasil prediksi pasang surut laut periode **2027–2029*
 | Periode prediksi | 2027–2029 |
 | Data validasi | Data pengamatan BIG tahun 2025 |
 | Platform tampilan | Web statis (GitHub Pages), peta menggunakan Leaflet |
+| Tautan website | <https://fairuzalimah.github.io/pasut/> |
 
 ## 2. Fitur Dashboard
 
@@ -63,6 +70,7 @@ Dashboard ini menyajikan hasil prediksi pasang surut laut periode **2027–2029*
 ├── prepare_web_data.py     # Konversi hasil olahan menjadi CSV untuk web
 └── README.md
 ```
+
 
 ## 4. Metodologi Pengolahan
 
@@ -190,10 +198,11 @@ Kemudian buka <http://localhost:8000> pada peramban.
 1. *Push* seluruh isi folder ke repositori GitHub.
 2. Buka **Settings → Pages**.
 3. Pada **Source**, pilih branch `main` dan folder `/ (root)`, lalu simpan.
-4. Dashboard akan tersedia di `https://<username>.github.io/<nama-repositori>/` setelah proses *deploy* selesai.
+4. Dashboard akan tersedia di <https://fairuzalimah.github.io/pasut/> setelah proses *deploy* selesai.
 
 ## 10. Referensi
 
+- Website dashboard: <https://fairuzalimah.github.io/pasut/>
 - pyTMD: <https://github.com/pyTMD/pyTMD>
 - Dokumentasi pyTMD: <https://pytmd.readthedocs.io/>
 - Leaflet: <https://leafletjs.com/>

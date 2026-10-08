@@ -202,7 +202,6 @@ Kemudian buka <http://localhost:8000> pada peramban.
 
 <div align="center">
 
-**BRIN · DKP DIY**
 Dashboard Prediksi & Validasi Pasang Surut Laut di Wilayah Selatan Yogyakarta 2027–2029
 
 </div>

@@ -28,8 +28,6 @@ Prediksi pasang surut berbasis **pyTMD** dengan model **GOT** dan **EOT20** pada
 
 Dashboard ini menyajikan hasil prediksi pasang surut laut periode **2027–2029** di wilayah pesisir selatan Yogyakarta serta hasil validasinya. Seluruh perhitungan dilakukan secara *offline* menggunakan Python dan pustaka [pyTMD](https://github.com/pyTMD/pyTMD), kemudian hasilnya diekspor ke berkas CSV dan ditampilkan pada halaman web statis (HTML, CSS, JavaScript) tanpa membutuhkan server aplikasi.
 
-Versi *static* ini diselaraskan dengan dashboard Python Dash yang menjadi acuannya.
-
 | Komponen | Keterangan |
 |---|---|
 | Perangkat prediksi | pyTMD |
@@ -65,9 +63,6 @@ Versi *static* ini diselaraskan dengan dashboard Python Dash yang menjadi acuann
 ├── prepare_web_data.py     # Konversi hasil olahan menjadi CSV untuk web
 └── README.md
 ```
-
-> **Catatan penting**
-> Salin folder `data/` yang sudah berhasil digunakan pada dashboard static sebelumnya ke dalam folder ini. Salin pula dua berkas logo PNG asli ke dalam `assets/` dengan nama berkas yang sama seperti pada struktur di atas (mengikuti nama berkas pada versi Python).
 
 ## 4. Metodologi Pengolahan
 

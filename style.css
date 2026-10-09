@@ -273,19 +273,7 @@ sup.cite a{color:#0D1C42;text-decoration:none;font-weight:700}
   .filter-card .field,.filter-card .field.btn-field,.filter-card .field.fixed,.guide-controls .field,.guide-controls .field.date-field{flex:1 1 100%}
 }
 
-/* =====================================================================
-   TAMPILAN CETAK / SIMPAN PDF  (A4 portrait)
-   Urutan mengikuti dashboard_pasut_Samas_2029_December.pdf:
-   kop -> keterangan stasiun -> ringkasan -> grafik -> validasi silang
-   -> statistik mingguan -> tabel -> informasi analisis.
 
-   Grafik tidak dicetak langsung dari Plotly. app.js membuat gambar PNG
-   tiap grafik pada lebar kertas (kelas .print-img), sehingga tidak ada
-   lagi grafik/legenda yang terpotong di tepi halaman.
-
-   Default: tab Dashboard + Informasi Analisis. Untuk menyertakan tab
-   Validasi 2025 dan Panduan: document.body.classList.add('print-all')
-   ===================================================================== */
 @page{size:A4 portrait;margin:12mm 10mm}
 @media print{
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}

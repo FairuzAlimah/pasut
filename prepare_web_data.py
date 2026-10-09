@@ -3,9 +3,8 @@ import pandas as pd
 import re
 import shutil
 
-# ============================================================
+
 # KONFIGURASI
-# ============================================================
 MAGANG_DIR = Path(r"D:\MAGANG\A. Data\MAGANG")
 OLAH_DIR = MAGANG_DIR / "OLAH"
 WEB_DIR = Path(__file__).resolve().parent / "data"
@@ -47,9 +46,8 @@ def read_csv_safe(path):
         print(f"  Lewati {path}: {e}")
     return None
 
-# ============================================================
+
 # 1. KOORDINAT STASIUN
-# ============================================================
 print("\n[1/4] Membaca koordinat stasiun...")
 
 coord = None
@@ -89,9 +87,7 @@ if "station" not in coord.columns:
 coord.to_csv(WEB_DIR / "stations.csv", index=False)
 print("  ✓ stations.csv")
 
-# ============================================================
 # 2. GOT4.10
-# ============================================================
 print("\n[2/4] Membaca data GOT4.10...")
 
 tide_frames = []
@@ -171,9 +167,8 @@ else:
 tide.to_csv(WEB_DIR / "tide_all.csv", index=False)
 print(f"  ✓ tide_all.csv: {len(tide):,} baris")
 
-# ============================================================
+
 # 3. VALIDASI GOT4.10 vs EOT20
-# ============================================================
 print("\n[3/4] Mencari data validasi EOT20 secara rekursif...")
 
 val_frames = []
@@ -308,9 +303,8 @@ else:
         sorted(pd.to_numeric(validation["year"], errors="coerce").dropna().astype(int).unique())
     )
 
-# ============================================================
+
 # 4. VALIDASI BIG 2025
-# ============================================================
 print("\n[4/4] Mencari validasi BIG 2025...")
 
 big_candidates = [
@@ -408,7 +402,5 @@ pd.DataFrame(idx).to_csv(
 )
 
 print(f"  ✓ File validasi BIG: {len(idx)}")
-print("\n============================================================")
 print("SELESAI")
 print("Data website berada di:", WEB_DIR)
-print("============================================================")

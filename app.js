@@ -260,7 +260,7 @@ function updateDashboard(){
     {x:ws.map(x=>x.week_in_month),y:ws.map(x=>x.mean_m),type:"scatter",mode:"lines+markers",name:"Rata-rata mingguan (m)",line:{color:"#117864",width:2}},
     {x:[ws[0]?.week_in_month,ws.at(-1)?.week_in_month],y:[mean,mean],type:"scatter",mode:"lines",name:`MSL bulanan = ${fmt(mean)} m`,line:{color:"#34495e",dash:"dot",width:1.6},visible:"legendonly"}
   ],{
-    title:{text:`Statistik Mingguan - ${st} - ${MONTH_ID[month]} ${year} (satuan: meter terhadap MSL)`,x:0.02,xanchor:"left",font:{size:17,color:"#0D1C42"}},
+    title:{text:`Statistik Mingguan - ${st} - ${MONTH_ID[month]} ${year} (satuan: meter terhadap MSL)`,x:0.02,xanchor:"left",y:0.97,yanchor:"top",font:{size:17,color:"#0D1C42"}},
     xaxis:{title:"Minggu",showgrid:false},yaxis:{title:"Elevasi terhadap MSL (m)",showgrid:true,gridcolor:"#edf1f3",zeroline:true,zerolinecolor:"#b7c4cc"},
     barmode:"group",template:"plotly_white",height:500,margin:{l:65,r:25,t:95,b:65},
     paper_bgcolor:"white",plot_bgcolor:"white",font:{family:"Poppins, Arial, sans-serif",color:"#33415c"},

@@ -11,6 +11,110 @@ const MONTH_ID={"January":"Januari","February":"Februari","March":"Maret","April
 let tide=[], validation=[], metrics=[], stations=[], bigMetrics=[], bigIndex=[];
 let map, markers=[], mapHome=[-7.94,110.22], mapZoom=9;
 
+/* =====================================================================
+   MODUL CETAK (bagian 1): pembungkus Plotly
+   Setiap grafik yang selesai digambar akan dibuatkan gambar PNG pada
+   lebar kertas A4 (kelas .print-img). Saat dicetak, gambar inilah yang
+   tampil, bukan grafik Plotly asli, sehingga grafik dan legenda tidak
+   terpotong di tepi halaman.
+   Bagian ini harus berjalan sebelum Plotly.newPlot pertama dipanggil.
+   ===================================================================== */
+const PRINT_W = 700;          // lebar gambar (px), setara area cetak A4 portrait
+const PRINT_SCALE = 2;        // resolusi gambar (2x agar tajam)
+const PRINT_H_FACTOR = 0.9;   // tinggi grafik cetak = 90% tinggi layar
+let rawNewPlot = null;
+
+function plotEl(gd){ return typeof gd === "string" ? document.getElementById(gd) : gd; }
+function cloneDeep(o){ try{ return structuredClone(o); }catch(_){ return JSON.parse(JSON.stringify(o)); } }
+
+function markStale(el){
+  if(!el || !el.classList) return;
+  el._ptok = (el._ptok || 0) + 1;            // batalkan pembuatan gambar yang sedang berjalan
+  clearTimeout(el._pt);
+  el.classList.remove("pimg-ready");
+  const img = el.nextElementSibling;
+  if(img && img.classList.contains("print-img")) img.removeAttribute("src");
+}
+function scheduleImage(el){
+  if(!el || !el.closest("#tab-dashboard")) return;   // tab lain dibuat saat tombol cetak ditekan
+  clearTimeout(el._pt);
+  el._pt = setTimeout(()=>buildImage(el), 500);
+}
+async function renderPrintImage(el){
+  if(!el || !Array.isArray(el.data) || !el.layout || !rawNewPlot) return null;
+  const lay = cloneDeep(el.layout), data = cloneDeep(el.data);
+  const H = Math.round((Number(lay.height) || 450) * PRINT_H_FACTOR);
+  lay.autosize = false; lay.width = PRINT_W; lay.height = H;
+  lay.margin = Object.assign({l:70,r:30,t:90,b:65}, lay.margin || {});
+
+  if(lay.title){
+    const t = typeof lay.title === "string" ? {text:lay.title} : lay.title;
+    t.font = Object.assign({}, t.font, {size:15});
+    // judul panjang dipecah dua baris sebelum tanda kurung agar muat di lebar kertas
+    if(t.text && t.text.length > 52 && t.text.indexOf("<br>") < 0){
+      const i = t.text.indexOf(" (");
+      if(i > 0){ t.text = t.text.slice(0,i) + "<br>" + t.text.slice(i+1); lay.margin.t = Math.max(lay.margin.t, 95); }
+    }
+    lay.title = t;
+  }
+  if(lay.legend) lay.legend.font = Object.assign({}, lay.legend.font, {size:10});
+
+  const tmp = document.createElement("div");
+  tmp.style.cssText = `position:fixed;left:-99999px;top:0;width:${PRINT_W}px;height:${H}px;pointer-events:none`;
+  document.body.appendChild(tmp);
+  try{
+    await rawNewPlot(tmp, data, lay, {staticPlot:true, displayModeBar:false, responsive:false});
+    return await Plotly.toImage(tmp, {format:"png", width:PRINT_W, height:H, scale:PRINT_SCALE});
+  } finally {
+    try{ Plotly.purge(tmp); }catch(_){}
+    tmp.remove();
+  }
+}
+async function buildImage(el){
+  const token = el._ptok || 0;
+  let url = null;
+  try{ url = await renderPrintImage(el); }catch(e){ console.warn("Gagal membuat gambar cetak:", e); }
+  if(!url || token !== (el._ptok || 0)) return;      // grafik sudah berubah lagi
+  let img = el.nextElementSibling;
+  if(!img || !img.classList.contains("print-img")){
+    img = document.createElement("img");
+    img.className = "print-img";
+    img.alt = "Grafik";
+    el.after(img);
+  }
+  img.src = url;
+  el.classList.add("pimg-ready");
+}
+function printableCharts(){
+  const all = document.body.classList.contains("print-all");
+  return [...document.querySelectorAll(".chart")].filter(el =>
+    Array.isArray(el.data) && (all || el.closest("#tab-dashboard"))
+  );
+}
+async function ensurePrintImages(){
+  await Promise.all(printableCharts().map(async el=>{
+    if(!el.classList.contains("pimg-ready")){ clearTimeout(el._pt); await buildImage(el); }
+  }));
+}
+(function patchPlotly(){
+  if(!window.Plotly) return;
+  rawNewPlot = Plotly.newPlot.bind(Plotly);
+  const rawPurge = Plotly.purge.bind(Plotly);
+  Plotly.newPlot = function(gd, ...rest){
+    const el = plotEl(gd);
+    markStale(el);
+    const p = rawNewPlot(gd, ...rest);
+    p.then(()=>scheduleImage(el));
+    return p;
+  };
+  Plotly.purge = function(gd){
+    markStale(plotEl(gd));
+    return rawPurge(gd);
+  };
+})();
+
+/* ===================================================================== */
+
 function parseCSV(text){
   const rows = [];
   let row = [], cell = "", quoted = false;
@@ -72,11 +176,12 @@ function fmt(v,d=3){const x=num(v);return x===null?"-":x.toFixed(d)}
 function monthName(date){return new Date(date).toLocaleString("en-US",{month:"long",timeZone:"UTC"})}
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 
+/* Gaya kartu kini ada di style.css (.stat-card .label/.value/.unit) agar bisa diatur untuk cetak */
 function card(title,value,unit="",accent="#0d1c42"){
   return `<div class="stat-card" style="--accent:${accent}">
-    <div class="label" style="font-size:13px;font-weight:600;color:#5a6384;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">${esc(title)}</div>
-    <div class="value" style="font-size:26px;font-weight:700;color:#0D1C42;line-height:1.15">${esc(value)}</div>
-    <div class="unit" style="font-size:13px;color:#6b7590;margin-top:4px">${esc(unit)}</div>
+    <div class="label">${esc(title)}</div>
+    <div class="value">${esc(value)}</div>
+    <div class="unit">${esc(unit)}</div>
   </div>`;
 }
 
@@ -379,11 +484,16 @@ function detectExtrema(rows){
 function updateDaily(){
   const st=document.getElementById("daily-station").value,date=document.getElementById("daily-date").value;
   if(!date)return;
-  const start=new Date(date+"T00:00:00"),end=new Date(start);end.setDate(end.getDate()+1),margin=3*3600*1000;
+  const start=new Date(date+"T00:00:00"),end=new Date(start);
+  end.setDate(end.getDate()+1);
+  const margin=3*3600*1000;
   const sdf=tide.filter(r=>r.station===st).map(r=>({...r,_d:new Date(r.datetime_wib)})).filter(r=>r._d>=new Date(start-margin)&&r._d<=new Date(end.getTime()+margin)).sort((a,b)=>a._d-b._d);
   const day=sdf.filter(r=>r._d>=start&&r._d<end);
   if(!day.length){document.getElementById("daily-summary").innerHTML=card("Status","-","Data tidak tersedia","#a8453a");Plotly.purge("daily-chart");document.getElementById("daily-events").innerHTML="";return}
-  const validDay=day.filter(x=>Number.isFinite(num(x.tide_m))); const vals=validDay.map(x=>num(x.tide_m)); hi=Math.max(...vals); lo=Math.min(...vals); const events=detectExtrema(sdf).filter(e=>e.time>=start&&e.time<end);
+  const validDay=day.filter(x=>Number.isFinite(num(x.tide_m)));
+  const vals=validDay.map(x=>num(x.tide_m));
+  const hi=Math.max(...vals), lo=Math.min(...vals);
+  const events=detectExtrema(sdf).filter(e=>e.time>=start&&e.time<end);
   document.getElementById("daily-summary").innerHTML=card("Elevasi Tertinggi",fmt(hi),"m","#3f7d5a")+card("Elevasi Terendah",fmt(lo),"m","#a8453a")+card("Selisih Harian",fmt(hi-lo),"m","#2e4a8a")+card("Jumlah Pasang",events.filter(e=>e.type==="Pasang").length,"kali","#4a5578");
   const highs=events.filter(e=>e.type==="Pasang"), lows=events.filter(e=>e.type==="Surut");
   const traces=[{
@@ -447,6 +557,36 @@ function renderBig(){
   }).catch(e=>{document.getElementById("big-status").textContent="Gagal membaca data validasi BIG: "+e.message;document.getElementById("big-status").className="status error"});
 }
 
+/* =====================================================================
+   MODUL CETAK (bagian 2): keterangan stasiun + tombol Unduh PDF
+   ===================================================================== */
+function selText(id){
+  const e=document.getElementById(id);
+  return e&&e.options&&e.selectedIndex>=0?e.options[e.selectedIndex].text:"";
+}
+function fillPrintMeta(){
+  const box=document.getElementById("print-meta");
+  if(!box) return;
+  const sEl=document.getElementById("station");
+  const stName=selText("station"), stVal=sEl?sEl.value:"";
+  const r=stations.find(x=>x.station===stName||x.station===stVal);
+  let html=`Stasiun: <b>${esc(stName)}</b> &nbsp;|&nbsp; Tahun: <b>${esc(selText("year"))}</b> &nbsp;|&nbsp; Bulan: <b>${esc(selText("month"))}</b>`;
+  if(r&&num(r.longitude)!==null&&num(r.latitude)!==null){
+    html+=`<br>Koordinat Stasiun: Lon <b>${fmt(r.longitude,6)}</b>, Lat <b>${fmt(r.latitude,6)}</b>`;
+  }
+  box.innerHTML=html;
+}
+async function printReport(){
+  const btn=document.getElementById("print-pdf");
+  const label=btn.textContent;
+  btn.disabled=true; btn.textContent="Menyiapkan…";
+  try{ fillPrintMeta(); await ensurePrintImages(); }
+  catch(e){ console.warn("Persiapan cetak:", e); }
+  btn.disabled=false; btn.textContent=label;
+  window.print();
+}
+window.addEventListener("beforeprint", fillPrintMeta);
+
 async function init(){
   try{
     [tide,validation,metrics,stations,bigMetrics,bigIndex]=await Promise.all([csv(DATA.tide),csv(DATA.validation),csv(DATA.metrics),csv(DATA.stations),csv(DATA.bigMetrics),csv(DATA.bigIndex)]);
@@ -456,7 +596,7 @@ async function init(){
     document.getElementById("map-home").addEventListener("click",resetMap);
     document.getElementById("daily-station").addEventListener("change",updateDaily);document.getElementById("daily-date").addEventListener("change",updateDaily);
     document.getElementById("big-station").addEventListener("change",updateBigMonths);document.getElementById("big-month").addEventListener("change",renderBig);
-    document.getElementById("print-pdf").addEventListener("click",()=>window.print());
+    document.getElementById("print-pdf").addEventListener("click",printReport);
   }catch(e){document.getElementById("status").textContent="Gagal memuat data: "+e.message+". Pastikan file CSV sudah ditempatkan sesuai struktur folder.";document.getElementById("status").className="status error";console.error(e)}
 }
 init();

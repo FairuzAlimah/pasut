@@ -11,14 +11,6 @@ const MONTH_ID={"January":"Januari","February":"Februari","March":"Maret","April
 let tide=[], validation=[], metrics=[], stations=[], bigMetrics=[], bigIndex=[];
 let map, markers=[], mapHome=[-7.94,110.22], mapZoom=9;
 
-/* =====================================================================
-   MODUL CETAK (bagian 1): pembungkus Plotly
-   Setiap grafik yang selesai digambar akan dibuatkan gambar PNG pada
-   lebar kertas A4 (kelas .print-img). Saat dicetak, gambar inilah yang
-   tampil, bukan grafik Plotly asli, sehingga grafik dan legenda tidak
-   terpotong di tepi halaman.
-   Bagian ini harus berjalan sebelum Plotly.newPlot pertama dipanggil.
-   ===================================================================== */
 const PRINT_W = 700;          // lebar gambar (px), setara area cetak A4 portrait
 const PRINT_SCALE = 2;        // resolusi gambar (2x agar tajam)
 const PRINT_H_FACTOR = 0.9;   // tinggi grafik cetak = 90% tinggi layar
@@ -113,7 +105,6 @@ async function ensurePrintImages(){
   };
 })();
 
-/* ===================================================================== */
 
 function parseCSV(text){
   const rows = [];

@@ -40,7 +40,7 @@ Dashboard ini menyajikan hasil prediksi pasang surut laut periode **2027–2029*
 
 ## 2. Fitur Dashboard
 
-- **Kartu statistik**: ringkasan nilai utama pasang surut.
+- **Ringkasan statistik**: ringkasan nilai utama pasang surut.
 - **Peta interaktif**: sebaran stasiun dalam bentuk pin pada peta Leaflet.
 - **Statistik mingguan**: ringkasan pasut per pekan.
 - **Validasi EOT20**: perbandingan hasil prediksi dengan model EOT20.
@@ -122,7 +122,7 @@ Untuk menyertakan seluruh dependensi opsional:
 python -m pip install pyTMD[all]
 ```
 
-**Menggunakan conda / mamba (conda-forge)**
+**Menggunakan conda/mamba (conda-forge)**
 
 ```bash
 conda install -c conda-forge pytmd

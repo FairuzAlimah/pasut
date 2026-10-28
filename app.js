@@ -535,7 +535,11 @@ function renderBig(){
   const st=document.getElementById("big-station").value,month=document.getElementById("big-month").value;
   const idx=bigIndex.find(x=>x.station_code===st&&x.month===month);
   if(!idx){document.getElementById("big-status").textContent="Data tidak tersedia.";return}
-  fetch("data/validasi_big/"+idx.filename).then(r=>{if(!r.ok)throw new Error(`Tidak dapat membaca data BIG (HTTP ${r.status})`);return r.text()}).then(parseCSV).then(rows=>{
+  fetch("data/validasi_big/"+encodeURIComponent(st.toLowerCase())+"/"+idx.filename).then(r=>{if(!r.ok)throw new Error(`Tidak dapat membaca data BIG (HTTP ${r.status})`);return r.text()}).then(parseCSV).then(rows=>{
+    // Pengaman: jika file memuat kolom station, hanya pakai baris stasiun terpilih
+    if(rows.length&&"station" in rows[0]){rows=rows.filter(r=>String(r.station||"").trim().toUpperCase()===st.toUpperCase())}
+    if(!rows.length)throw new Error(`file ${idx.filename} tidak berisi data stasiun ${st}`);
+    document.getElementById("big-status").className="status";
     const ms=bigMetrics.filter(x=>x.station===st&&x.month===month);
     const lookup=k=>{const x=ms.find(r=>r.perbandingan===k);return x||null};
     const a=lookup("GOT4.10 vs BIG"),b=lookup("EOT20 vs BIG"),c=lookup("GOT4.10 vs EOT20");

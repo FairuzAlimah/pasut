@@ -585,7 +585,7 @@ window.addEventListener("beforeprint", fillPrintMeta);
 async function init(){
   try{
     [tide,validation,metrics,stations,bigMetrics,bigIndex]=await Promise.all([csv(DATA.tide),csv(DATA.validation),csv(DATA.metrics),csv(DATA.stations),csv(DATA.bigMetrics),csv(DATA.bigIndex)]);
-    setupSelectors();initMap();updateMap(document.getElementById("station").value,false);window.dashboardStations=stations;window.dispatchEvent(new Event("dashboard-ready"));updateDashboard();updateDaily();renderBig();
+    setupSelectors();initMap();updateMap(document.getElementById("station").value,false);window.dashboardStations=stations;window.dispatchEvent(new Event("dashboard-ready"));updateDashboard();updateDaily();
     document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".tab-panel").forEach(x=>x.classList.remove("active"));btn.classList.add("active");document.getElementById("tab-"+btn.dataset.tab).classList.add("active");setTimeout(()=>{map?.invalidateSize();window.dispatchEvent(new Event("resize"))},100)}));
     ["station","month","year"].forEach(id=>document.getElementById(id).addEventListener("change",updateDashboard));
     document.getElementById("map-home").addEventListener("click",resetMap);

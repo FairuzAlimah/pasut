@@ -3,9 +3,8 @@ import pandas as pd
 import re
 import shutil
 
-# ============================================================
+
 # KONFIGURASI
-# ============================================================
 MAGANG_DIR = Path(r"D:\MAGANG\A. Data\MAGANG")
 OLAH_DIR = MAGANG_DIR / "OLAH"
 WEB_DIR = Path(__file__).resolve().parent / "data"
@@ -47,9 +46,8 @@ def read_csv_safe(path):
         print(f"  Lewati {path}: {e}")
     return None
 
-# ============================================================
+
 # 1. KOORDINAT STASIUN
-# ============================================================
 print("\n[1/4] Membaca koordinat stasiun...")
 
 coord = None
@@ -89,9 +87,7 @@ if "station" not in coord.columns:
 coord.to_csv(WEB_DIR / "stations.csv", index=False)
 print("  ✓ stations.csv")
 
-# ============================================================
 # 2. GOT4.10
-# ============================================================
 print("\n[2/4] Membaca data GOT4.10...")
 
 tide_frames = []
@@ -171,9 +167,8 @@ else:
 tide.to_csv(WEB_DIR / "tide_all.csv", index=False)
 print(f"  ✓ tide_all.csv: {len(tide):,} baris")
 
-# ============================================================
+
 # 3. VALIDASI GOT4.10 vs EOT20
-# ============================================================
 print("\n[3/4] Mencari data validasi EOT20 secara rekursif...")
 
 val_frames = []
@@ -308,9 +303,8 @@ else:
         sorted(pd.to_numeric(validation["year"], errors="coerce").dropna().astype(int).unique())
     )
 
-# ============================================================
+
 # 4. VALIDASI BIG 2025
-# ============================================================
 print("\n[4/4] Mencari validasi BIG 2025...")
 
 big_candidates = [
@@ -332,12 +326,20 @@ else:
 idx = []
 
 # Bersihkan hasil lama agar tidak menampilkan file basi
-for old in (WEB_DIR / "validasi_big").glob("*.csv"):
+for old in (WEB_DIR / "validasi_big").rglob("*.csv"):
     old.unlink()
 
+used = {}
+
 for p in sorted(big_files):
-    # Ambil station code dari folder
+    # Kode stasiun: utamakan kolom "station" di dalam file, cadangan: nama folder
     station_code = p.parent.name.upper()
+    try:
+        head = pd.read_csv(p, nrows=1)
+        if "station" in head.columns and pd.notna(head["station"].iloc[0]):
+            station_code = str(head["station"].iloc[0]).strip().upper()
+    except Exception as e:
+        print(f"  Peringatan: gagal membaca header {p}: {e}")
 
     # Format nama file umumnya:
     # 2025_01_Januari_got410_eot20_vs_big.csv
@@ -370,8 +372,16 @@ for p in sorted(big_files):
         if not month:
             month = parts[1]
 
-    target = WEB_DIR / "validasi_big" / p.name
-    shutil.copy2(p, target)
+    # Satu subfolder per stasiun (data/validasi_big/glgh/, /sadg/, dst.)
+    # karena nama file asli sama untuk semua stasiun.
+    key = (station_code, p.name)
+    if key in used:
+        raise RuntimeError(f"File ganda untuk {station_code}: {p.name}\n  {used[key]}\n  {p}")
+    used[key] = p
+
+    target_dir = WEB_DIR / "validasi_big" / station_code.lower()
+    target_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(p, target_dir / p.name)
 
     idx.append({
         "station_code": station_code,
@@ -408,7 +418,24 @@ pd.DataFrame(idx).to_csv(
 )
 
 print(f"  ✓ File validasi BIG: {len(idx)}")
-print("\n============================================================")
+
+# Cek kelengkapan: setiap stasiun BIG harus punya 12 bulan
+big_idx = pd.DataFrame(idx)
+masalah = 0
+for code, g in big_idx.groupby("station_code"):
+    kurang = [m for m in dict.fromkeys(MONTHS.values()) if m not in set(g["month"])]
+    if kurang:
+        print(f"  ⚠ BIG {code}: bulan hilang -> {', '.join(kurang)}")
+        masalah += 1
+print("  Stasiun BIG:", ", ".join(sorted(big_idx["station_code"].unique())) if not big_idx.empty else "-")
+if not validation.empty:
+    ada = set(zip(validation["station"], validation["year"].astype(int), validation["month"]))
+    for st in sorted(set(coord["station"].map(clean_station))):
+        for yr in YEARS:
+            for mo in dict.fromkeys(MONTHS.values()):
+                if (st, yr, mo) not in ada:
+                    print(f"  ⚠ Validasi EOT20 hilang: {st} {yr} {mo}")
+                    masalah += 1
+print("  ✓ Data lengkap." if masalah == 0 else f"  ⚠ {masalah} masalah kelengkapan, periksa sebelum push.")
 print("SELESAI")
 print("Data website berada di:", WEB_DIR)
-print("============================================================")

@@ -1,6 +1,6 @@
 const DATA = {
   tide: "data/tide_all.csv",
-  validation: "data/validation_eot20_all_gabungan.csv",
+  validation: "data/validation_eot20_all_gabungann.csv",
   metrics: "data/metrics_eot20_all.csv",
   stations: "data/stations.csv",
   bigMetrics: "data/metrics_validasi_big_2025.csv",

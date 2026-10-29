@@ -1,6 +1,8 @@
 # VALIDASI 3 PERBANDINGAN PASANG SURUT TAHUN 2025
 
 # 1. IMPORT LIBRARY
+import argparse
+import os
 import re
 import json
 import numpy as np
@@ -28,8 +30,44 @@ STASIUN_KOORDINAT = {
 VALIDATION_INTERVAL_MINUTES = 10
 SHOW_PLOTS = False
 
-# 3. FOLDER KERJA
-MAGANG_DIR = Path(r"D:\MAGANG\A. Data\MAGANG")
+# 3. FOLDER KERJA (INDEPENDEN LAPTOP)
+try:
+    PROJECT_DIR = Path(__file__).resolve().parent
+except NameError:                      
+    PROJECT_DIR = Path.cwd()
+
+DATA_DIR_MANUAL = None                 
+
+PETUNJUK_PATH = (
+    "Cara mengatur folder data utama:\n"
+    "  - taruh folder 'MAGANG' di samping skrip ini, ATAU\n"
+    "  - jalankan dengan  --data-dir \"<lokasi folder MAGANG>\", ATAU\n"
+    "  - atur environment variable PASUT_DATA_DIR, ATAU\n"
+    "  - isi DATA_DIR_MANUAL di bagian pengaturan skrip."
+)
+
+def resolve_magang_dir():
+    """Mengembalikan (path folder data utama, keterangan sumber path)."""
+    parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    parser.add_argument("--data-dir", default=None)
+    args, _ = parser.parse_known_args()       # argumen asing (mis. dari Spyder) diabaikan
+    for sumber, nilai in (
+        ("argumen --data-dir", args.data_dir),
+        ("environment variable PASUT_DATA_DIR", os.environ.get("PASUT_DATA_DIR")),
+        ("DATA_DIR_MANUAL", DATA_DIR_MANUAL),
+    ):
+        if nilai:
+            return Path(nilai).expanduser().resolve(), sumber
+    return PROJECT_DIR / "MAGANG", "default (folder MAGANG di samping skrip)"
+
+MAGANG_DIR, MAGANG_DIR_SUMBER = resolve_magang_dir()
+
+if not MAGANG_DIR.exists():
+    raise FileNotFoundError(
+        f"Folder data utama tidak ditemukan:\n  {MAGANG_DIR}\n"
+        f"(sumber path: {MAGANG_DIR_SUMBER})\n\n{PETUNJUK_PATH}"
+    )
+
 MODEL_DIR = MAGANG_DIR / "pytmd_data"
 OBS_DIR = MAGANG_DIR / "data_observasi_big"
 HASIL_DIR = MAGANG_DIR / f"hasil_validasi_3perbandingan_{YEAR}"
@@ -41,6 +79,7 @@ for folder in [HASIL_DIR, CSV_DIR, GRAFIK_DIR]:
 print("=" * 70)
 print(f"VALIDASI 3 PERBANDINGAN: {MODEL_A_NAME} vs {MODEL_B_NAME} vs BIG - TAHUN {YEAR}")
 print("=" * 70)
+print("Folder data utama     :", MAGANG_DIR, f"[{MAGANG_DIR_SUMBER}]")
 print("Folder data acuan BIG :", OBS_DIR)
 print("Folder hasil validasi :", HASIL_DIR)
 print("\nTitik koordinat yang dipakai untuk hitung model:")

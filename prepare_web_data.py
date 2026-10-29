@@ -1,13 +1,67 @@
-from pathlib import Path
-import pandas as pd
+import argparse
+import os
 import re
 import shutil
+import sys
+from pathlib import Path
+
+import pandas as pd
+
+# Agar simbol (✓, ⚠) tidak membuat error di konsol Windows dengan encoding lama
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
 
 
 # KONFIGURASI
-MAGANG_DIR = Path(r"D:\MAGANG\A. Data\MAGANG")
+try:
+    PROJECT_DIR = Path(__file__).resolve().parent
+except NameError:                     
+    PROJECT_DIR = Path.cwd()
+
+DATA_DIR_MANUAL = None                 
+PETUNJUK_PATH = (
+    "Cara mengatur folder data utama:\n"
+    "  - taruh folder 'MAGANG' di samping skrip ini, ATAU\n"
+    "  - jalankan dengan  --data-dir \"<lokasi folder MAGANG>\", ATAU\n"
+    "  - atur environment variable PASUT_DATA_DIR, ATAU\n"
+    "  - isi DATA_DIR_MANUAL di bagian pengaturan skrip."
+)
+
+def resolve_magang_dir():
+    """Mengembalikan (path folder data utama, keterangan sumber path)."""
+    parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    parser.add_argument("--data-dir", default=None)
+    args, _ = parser.parse_known_args()       # argumen asing (mis. dari Spyder) diabaikan
+    for sumber, nilai in (
+        ("argumen --data-dir", args.data_dir),
+        ("environment variable PASUT_DATA_DIR", os.environ.get("PASUT_DATA_DIR")),
+        ("DATA_DIR_MANUAL", DATA_DIR_MANUAL),
+    ):
+        if nilai:
+            return Path(nilai).expanduser().resolve(), sumber
+    return PROJECT_DIR / "MAGANG", "default (folder MAGANG di samping skrip)"
+
+MAGANG_DIR, MAGANG_DIR_SUMBER = resolve_magang_dir()
+
 OLAH_DIR = MAGANG_DIR / "OLAH"
-WEB_DIR = Path(__file__).resolve().parent / "data"
+WEB_DIR = PROJECT_DIR / "data"          # selalu di folder "data" di samping skrip (isi repo)
+
+if not MAGANG_DIR.exists():
+    raise FileNotFoundError(
+        f"Folder data utama tidak ditemukan:\n  {MAGANG_DIR}\n"
+        f"(sumber path: {MAGANG_DIR_SUMBER})\n\n{PETUNJUK_PATH}"
+    )
+if not OLAH_DIR.exists():
+    raise FileNotFoundError(
+        f"Folder hasil pengolahan (OLAH) tidak ditemukan:\n  {OLAH_DIR}\n"
+        "Jalankan dahulu pengolahan.py dan 2025.py, atau arahkan ke folder yang benar.\n\n"
+        f"{PETUNJUK_PATH}"
+    )
+
+print("Folder data utama :", MAGANG_DIR, f"[{MAGANG_DIR_SUMBER}]")
+print("Folder output web :", WEB_DIR)
 
 YEARS = [2027, 2028, 2029]
 BIG_YEAR = 2025

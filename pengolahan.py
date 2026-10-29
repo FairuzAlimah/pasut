@@ -1,7 +1,9 @@
 #PENGOLAHAN 2027-2029
 
 # 1. IMPORT LIBRARY
+import argparse
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -36,7 +38,37 @@ COLOR_HIGH = "#1e8449"          # penanda pasang tertinggi
 COLOR_LOW = "#c0392b"           # penanda surut terendah
 
 # 3. FOLDER PENYIMPANAN OTOMATIS
-MAGANG_DIR = Path(r"D:\MAGANG\A. Data\MAGANG")
+try:
+    PROJECT_DIR = Path(__file__).resolve().parent
+except NameError:                    
+    PROJECT_DIR = Path.cwd()
+
+DATA_DIR_MANUAL = None                 
+
+PETUNJUK_PATH = (
+    "Cara mengatur folder data utama:\n"
+    "  - taruh folder 'MAGANG' di samping skrip ini, ATAU\n"
+    "  - jalankan dengan  --data-dir \"<lokasi folder MAGANG>\", ATAU\n"
+    "  - atur environment variable PASUT_DATA_DIR, ATAU\n"
+    "  - isi DATA_DIR_MANUAL di bagian pengaturan skrip."
+)
+
+def resolve_magang_dir():
+    """Mengembalikan (path folder data utama, keterangan sumber path)."""
+    parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    parser.add_argument("--data-dir", default=None)
+    args, _ = parser.parse_known_args()       # argumen asing (mis. dari Spyder) diabaikan
+    for sumber, nilai in (
+        ("argumen --data-dir", args.data_dir),
+        ("environment variable PASUT_DATA_DIR", os.environ.get("PASUT_DATA_DIR")),
+        ("DATA_DIR_MANUAL", DATA_DIR_MANUAL),
+    ):
+        if nilai:
+            return Path(nilai).expanduser().resolve(), sumber
+    return PROJECT_DIR / "MAGANG", "default (folder MAGANG di samping skrip)"
+
+MAGANG_DIR, MAGANG_DIR_SUMBER = resolve_magang_dir()
+
 MODEL_DIR = MAGANG_DIR / "pytmd_data"          # model tetap di folder MAGANG
 OLAH_DIR = MAGANG_DIR / "OLAH"                 # semua hasil pengolahan disimpan di sini
 
@@ -69,7 +101,7 @@ for folder in [MAGANG_DIR, MODEL_DIR, OLAH_DIR]:
 print("\n" + "=" * 70)
 print("PENGATURAN FOLDER")
 print("=" * 70)
-print("Folder utama          :", MAGANG_DIR)
+print("Folder utama          :", MAGANG_DIR, f"[{MAGANG_DIR_SUMBER}]")
 print("Folder model          :", MODEL_DIR)
 print("Folder OLAH           :", OLAH_DIR)
 print("Tahun yang diproses   :", YEARS)

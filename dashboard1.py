@@ -1,7 +1,9 @@
 # DASHBOARD PASANG SURUT
 
 # 1. IMPORT LIBRARY
+import argparse
 import io
+import os
 import shutil
 import threading
 import webbrowser
@@ -60,7 +62,41 @@ UI_MUTED = "#6b7590"       # teks keterangan
 #   MAGANG/pytmd_data                         -> model (tidak dipakai dashboard)
 #   MAGANG/OLAH/hasil_pasut_{tahun}           -> hasil prediksi GOT4.10 per tahun
 #   MAGANG/OLAH/hasil_validasi_eot20_{tahun}  -> hasil validasi GOT4.10 vs EOT20 per tahun
-MAGANG_DIR = Path(r"D:\MAGANG\A. Data\MAGANG")
+try:
+    PROJECT_DIR = Path(__file__).resolve().parent
+except NameError:
+    PROJECT_DIR = Path.cwd()
+
+DATA_DIR_MANUAL = None
+
+PETUNJUK_PATH = (
+    "Cara mengatur folder data utama:\n"
+    "  - taruh folder 'MAGANG' di samping skrip ini, ATAU\n"
+    "  - jalankan dengan  --data-dir \"<lokasi folder MAGANG>\", ATAU\n"
+    "  - atur environment variable PASUT_DATA_DIR, ATAU\n"
+    "  - isi DATA_DIR_MANUAL di bagian pengaturan skrip."
+)
+
+def resolve_magang_dir():
+    """Mengembalikan (path folder data utama, keterangan sumber path)."""
+    parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    parser.add_argument("--data-dir", default=None)
+    args, _ = parser.parse_known_args()
+    for sumber, nilai in (
+        ("argumen --data-dir", args.data_dir),
+        ("environment variable PASUT_DATA_DIR", os.environ.get("PASUT_DATA_DIR")),
+        ("DATA_DIR_MANUAL", DATA_DIR_MANUAL),
+    ):
+        if nilai:
+            return Path(nilai).expanduser().resolve(), sumber
+    return PROJECT_DIR / "MAGANG", "default (folder MAGANG di samping skrip)"
+
+MAGANG_DIR, MAGANG_DIR_SUMBER = resolve_magang_dir()
+if not MAGANG_DIR.exists():
+    raise FileNotFoundError(
+        f"Folder data utama tidak ditemukan:\n  {MAGANG_DIR}\n"
+        f"(sumber path: {MAGANG_DIR_SUMBER})\n\n{PETUNJUK_PATH}"
+    )
 MODEL_DIR = MAGANG_DIR / "pytmd_data"
 OLAH_DIR = MAGANG_DIR / "OLAH"
 
@@ -85,7 +121,7 @@ def metrics_file_year(year):
 print("\n" + "=" * 70)
 print("DASHBOARD PASANG SURUT WILAYAH SELATAN YOGYAKARTA")
 print("=" * 70)
-print("Folder utama          :", MAGANG_DIR)
+print("Folder utama          :", MAGANG_DIR, f"[{MAGANG_DIR_SUMBER}]")
 print("Folder OLAH           :", OLAH_DIR)
 for _y in YEARS:
     print(f"Folder hasil {_y}      :", OUTPUT_DIR_BY_YEAR[_y])
@@ -133,14 +169,23 @@ for name, (lon, lat) in valid_stations.items():
 # 6. PENGATURAN DASHBOARD
 DASHBOARD_DIR = OLAH_DIR / "dashboard"
 DASHBOARD_DIR.mkdir(parents=True, exist_ok=True)
-LOGO_BRIN = MAGANG_DIR / "logo_brin.png"
-LOGO_DKP = MAGANG_DIR / "logo_dkp_diy.png"
+# Logo dicari dulu di folder MAGANG, lalu di folder assets/ bawaan repositori.
+def _cari_aset(nama_file):
+    for kandidat in (MAGANG_DIR / nama_file, PROJECT_DIR / "assets" / nama_file):
+        if kandidat.exists():
+            return kandidat
+    return MAGANG_DIR / nama_file
+
+LOGO_BRIN = _cari_aset("logo_brin.png")
+LOGO_DKP = _cari_aset("logo_dkp_diy.png")
 
 # Folder foto untuk tab "Panduan Pemanfaatan" (opsional).
 # Taruh file bernama: nelayan, pemancing, wisata, pengelola
 # (ekstensi .jpg / .jpeg / .png / .webp). Bila belum ada, dashboard
 # otomatis memakai ilustrasi pantai bawaan.
 PANDUAN_IMG_DIR = MAGANG_DIR / "foto_panduan"
+if not PANDUAN_IMG_DIR.exists():
+    PANDUAN_IMG_DIR = PROJECT_DIR / "assets" / "panduan"   # foto bawaan repositori
 
 INSTANSI_NAMA = "Pusat Riset Iklim dan Atmosfer, BRIN"
 INSTANSI_HOMEBASE = "Homebase Yogyakarta, KST Ahmad Baiquni"
@@ -422,7 +467,7 @@ else:
         f"(GOT4.10 vs EOT20 vs BIG) belum ditemukan di:\n  {HASIL_VALIDASI_BIG_DIR}"
     )
     print(
-        "Jalankan dahulu script 'validasi_3perbandingan_2025.py'. "
+        "Jalankan dahulu skrip '2025.py'. "
         "Menu 'Validasi 2025' akan tetap muncul di dashboard tetapi "
         "menampilkan data kosong sampai file tersebut tersedia."
     )
@@ -2894,7 +2939,7 @@ tab_validasi_big_children = [
                 "Hasil validasi 3 perbandingan (GOT4.10 vs EOT20 vs BIG) tahun "
                 f"{YEAR_VALIDASI_BIG} belum ditemukan di folder "
                 f"'hasil_validasi_3perbandingan_{YEAR_VALIDASI_BIG}'. Jalankan dahulu script "
-                "'validasi_3perbandingan_2025.py', lalu buka ulang dashboard ini.",
+                "'2025.py', lalu buka ulang dashboard ini.",
                 tone="warning",
             )
         ])
@@ -3269,17 +3314,26 @@ def download_pdf(n_clicks, selected_station, selected_month, selected_year):
 # 18. SALIN LOGO & FOTO PANDUAN KE ASSETS
 ASSETS_DIR = Path(app.server.root_path) / "assets"
 ASSETS_DIR.mkdir(exist_ok=True)
+def _salin_aman(sumber, tujuan):
+    """Salin berkas; dilewati bila sumber dan tujuan adalah berkas yang sama."""
+    try:
+        if Path(tujuan).exists() and Path(sumber).resolve() == Path(tujuan).resolve():
+            return
+        shutil.copy2(sumber, tujuan)
+    except OSError as err:
+        print(f"[peringatan] Gagal menyalin {sumber}: {err}")
+
 if LOGO_BRIN.exists():
-    shutil.copy2(LOGO_BRIN, ASSETS_DIR / "logo_brin.png")
+    _salin_aman(LOGO_BRIN, ASSETS_DIR / "logo_brin.png")
 if LOGO_DKP.exists():
-    shutil.copy2(LOGO_DKP, ASSETS_DIR / "logo_dkp_diy.png")
+    _salin_aman(LOGO_DKP, ASSETS_DIR / "logo_dkp_diy.png")
 
 (ASSETS_DIR / "panduan").mkdir(exist_ok=True)
 _foto_ditemukan = []
 for _nama in ("nelayan", "pemancing", "wisata", "pengelola"):
     _p = find_panduan_image(_nama)
     if _p is not None:
-        shutil.copy2(_p, ASSETS_DIR / "panduan" / _p.name)
+        _salin_aman(_p, ASSETS_DIR / "panduan" / _p.name)
         _foto_ditemukan.append(_nama)
 
 # 19. MENJALANKAN DASHBOARD
@@ -3294,7 +3348,7 @@ print(
 print(
     "Dashboard membaca data validasi 2025 dari  :",
     METRICS_VALIDASI_BIG_FILE if VALIDASI_BIG_TERSEDIA
-    else "(belum tersedia - jalankan validasi_3perbandingan_2025.py)",
+    else "(belum tersedia - jalankan 2025.py)",
 )
 print("Tahun tersedia pada menu prediksi          :", year_options)
 print(

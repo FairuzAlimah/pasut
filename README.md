@@ -72,13 +72,7 @@ Prediksi ini dilakukan oleh Pusat Riset Iklim dan Atmosfer, BRIN, Homebase Yogya
 ├── pengolahan.py           # Prediksi pasut 2027–2029 (GOT4.10) + validasi silang EOT20
 ├── 2025.py                 # Validasi GOT4.10, EOT20, dan data BIG tahun 2025
 ├── prepare_web_data.py     # Menyusun hasil olahan menjadi CSV untuk dashboard
-├── dashboard1.py           # Dashboard Python (Dash) yang membaca hasil di MAGANG/OLAH
-├── requirements.txt        # Pustaka Python untuk pengolahan beserta versinya
-├── requirements-dashboard.txt  # Tambahan pustaka khusus dashboard1.py
-├── setup_windows.bat       # Pasang virtual environment + pustaka (Windows, sekali saja)
-├── jalankan_dashboard_web.bat      # Buka dashboard web di localhost:8000
-├── jalankan_dashboard_python.bat   # Jalankan dashboard1.py
-├── jalankan_pengolahan.bat         # Jalankan pengolahan.py, 2025.py, prepare_web_data.py
+├── requirements.txt        # Daftar pustaka Python beserta versinya
 └── README.md
 ```
 
@@ -90,7 +84,7 @@ Folder `data/` sudah berisi hasil pengolahan, sehingga **dashboard dapat langsun
 |---|---|---|
 | **GOT4.10** | Goddard Ocean Tide, NASA GSFC (Ray, 2013) | Diunduh **otomatis** oleh `pengolahan.py` melalui pyTMD |
 | **EOT20** | Empirical Ocean Tide model, DGFI-TUM (Hart-Davis dkk., 2021) | Diunduh **manual** dari SEANOE, [doi:10.17882/79489](https://doi.org/10.17882/79489) (NetCDF, lisensi CC BY 4.0) |
-| **Prediksi pasut resmi BIG 2025** | Badan Informasi Geospasial (Direktorat Sistem Referensi Geospasial) | Diminta dari BIG (kontak: srgi@big.go.id); hanya diperlukan untuk menjalankan `2025.py`. Salinannya sudah disertakan di `data/data_observasi_big/` |
+| **Prediksi pasut resmi BIG 2025** | Badan Informasi Geospasial (Direktorat Sistem Referensi Geospasial) | Diminta dari BIG (kontak: srgi@big.go.id); hanya diperlukan untuk menjalankan `2025.py` |
 
 Model pasut menyimpan konstanta harmonik (amplitudo dan fase tiap konstituen, misalnya M2, S2, K1, O1). pyTMD menjumlahkannya menjadi deret waktu elevasi muka laut pada koordinat dan waktu yang diminta.
 
@@ -182,14 +176,10 @@ venv\Scripts\activate          # Windows
 # 3) Pasang pustaka
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-# (opsional, hanya bila memakai dashboard1.py)
-python -m pip install -r requirements-dashboard.txt
 
 # 4) Verifikasi
 python -c "import pyTMD; print(pyTMD.__version__)"
 ```
-
-Pengguna Windows dapat cukup mengeklik ganda `setup_windows.bat`, yang melakukan langkah 2 dan 3 sekaligus.
 
 Alternatif dengan conda: `conda install -c conda-forge pytmd numpy pandas scipy matplotlib`.
 
@@ -253,7 +243,7 @@ python prepare_web_data.py --data-dir "E:\Data\MAGANG"
 Catatan:
 
 - Langkah 1 memerlukan koneksi internet pada proses pertama (mengunduh GOT4.10) dan model EOT20 yang sudah diletakkan di `MAGANG/pytmd_data/EOT20/`. Tanpa EOT20, prediksi GOT4.10 tetap dihitung, tetapi validasi silang dilewati.
-- Langkah 2 memerlukan data BIG. Skrip mencarinya di `MAGANG/data_observasi_big/`; bila kosong, otomatis memakai salinan di `data/data_observasi_big/` pada repositori.
+- Langkah 2 memerlukan data BIG pada `MAGANG/data_observasi_big/`.
 - Langkah 3 mencetak peringatan bila ada stasiun atau bulan yang belum lengkap. Periksa peringatan tersebut sebelum menggunakan hasilnya pada dashboard.
 - Pengolahan 3 tahun × 13 stasiun memerlukan waktu cukup lama; hasil tiap bulan disimpan bertahap.
 
@@ -266,17 +256,6 @@ python -m http.server 8000
 ```
 
 Kemudian buka <http://localhost:8000> pada peramban.
-
-### Dashboard Python (opsional)
-
-`dashboard1.py` adalah versi Dash yang membaca langsung hasil pengolahan di `MAGANG/OLAH/` (bukan folder `data/`), sehingga **pengolahan.py harus sudah dijalankan** lebih dulu. Pustaka tambahan dipasang dari `requirements-dashboard.txt`. Lokasi folder `MAGANG` ditentukan dengan aturan yang sama seperti pada bagian 8.
-
-```bash
-python dashboard1.py
-python dashboard1.py --data-dir "E:\Data\MAGANG"
-```
-
-Dashboard dibuka pada <http://127.0.0.1:8050/>. Logo dan foto panduan diambil dari `MAGANG/` bila ada, selain itu dari folder `assets/` repositori.
 
 ## 11. Berkas Data pada Dashboard
 

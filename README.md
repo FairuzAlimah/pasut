@@ -144,9 +144,30 @@ pyTMD memasang dependensi intinya secara otomatis. Untuk skrip pada repositori i
 python -m pip install numpy pandas scipy matplotlib
 ```
 
-### 5.5 Data Model Pasut
+### 5.5 Data Model Pasut dan Folder Data
 
-pyTMD merupakan perangkat hitung; **berkas model harus disediakan secara terpisah**. Unduh model **GOT** dan **EOT20**, simpan pada folder lokal, lalu atur lokasi direktori model pada bagian konfigurasi di `pengolahan.py` dan `2025.py`. Format dan struktur direktori model mengikuti dokumentasi pyTMD: <https://pytmd.readthedocs.io/>
+pyTMD merupakan perangkat hitung; **berkas model harus disediakan secara terpisah**. Model **GOT4.10** diunduh otomatis oleh `pengolahan.py`, sedangkan **EOT20** diunduh manual. Format dan struktur direktori model mengikuti dokumentasi pyTMD: <https://pytmd.readthedocs.io/>
+
+Skrip `pengolahan.py`, `2025.py`, dan `prepare_web_data.py` **tidak lagi memakai path tetap** (mis. `D:\...`), sehingga dapat dijalankan di laptop mana pun. Folder data utama (`MAGANG`) dicari dengan urutan prioritas:
+
+1. Argumen terminal `--data-dir "<lokasi folder MAGANG>"`
+2. Environment variable `PASUT_DATA_DIR`
+3. Variabel `DATA_DIR_MANUAL` di bagian pengaturan skrip
+4. Default: folder `MAGANG` di samping file skrip
+
+Struktur folder `MAGANG`:
+
+```
+MAGANG/
+├── pytmd_data/                 # model pasut (GOT4.10 otomatis; EOT20 manual)
+│   └── EOT20/
+│       ├── ocean_tides/*.nc
+│       └── load_tides/*.nc
+├── data_observasi_big/         # prediksi_pasut_<stasiun>_<tgl>_<tgl>_series.csv (BIG)
+└── OLAH/                       # hasil pengolahan (dibuat otomatis oleh skrip)
+```
+
+> Folder `MAGANG/` berukuran besar dan **tidak perlu di-*push*** ke GitHub. Tambahkan `MAGANG/` ke `.gitignore`.
 
 ### 5.6 Verifikasi Instalasi
 
@@ -166,6 +187,21 @@ python 2025.py
 # 3) Ekspor hasil ke CSV untuk dashboard
 python prepare_web_data.py
 ```
+
+Bila folder `MAGANG` tidak berada di samping skrip, tentukan lokasinya salah satu cara berikut (cukup salah satu):
+
+```bash
+# a) argumen terminal
+python pengolahan.py --data-dir "E:\Data\MAGANG"
+
+# b) environment variable (sekali per sesi terminal)
+#    Windows PowerShell : $env:PASUT_DATA_DIR = "E:\Data\MAGANG"
+#    Windows CMD        : set PASUT_DATA_DIR=E:\Data\MAGANG
+#    macOS / Linux      : export PASUT_DATA_DIR="$HOME/Data/MAGANG"
+python pengolahan.py
+```
+
+Pada Spyder/Jupyter, isi variabel `DATA_DIR_MANUAL` di bagian pengaturan skrip.
 
 ## 7. Prosedur Pembaruan Data
 

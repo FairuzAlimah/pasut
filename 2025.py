@@ -70,6 +70,11 @@ if not MAGANG_DIR.exists():
 
 MODEL_DIR = MAGANG_DIR / "pytmd_data"
 OBS_DIR = MAGANG_DIR / "data_observasi_big"
+# Bila belum ada di folder MAGANG, pakai salinan data BIG yang disertakan di repositori (data/data_observasi_big).
+if not any(OBS_DIR.glob("prediksi_pasut_*_series.csv")):
+    _obs_repo = PROJECT_DIR / "data" / "data_observasi_big"
+    if any(_obs_repo.glob("prediksi_pasut_*_series.csv")):
+        OBS_DIR = _obs_repo
 HASIL_DIR = MAGANG_DIR / f"hasil_validasi_3perbandingan_{YEAR}"
 CSV_DIR = HASIL_DIR / "csv"
 GRAFIK_DIR = HASIL_DIR / "grafik"
